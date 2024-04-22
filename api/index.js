@@ -1,35 +1,30 @@
-import * as dotenv from "dotenv";
-dotenv.config();
 import express from "express";
-import pkg from "@prisma/client";
-import morgan from "morgan";
-import cors from "cors";
-import { auth } from "express-oauth2-jwt-bearer";
 
-// this is a middleware that will validate the access token sent by the client
-const requireAuth = auth({
-  audience: process.env.AUTH0_AUDIENCE,
-  issuerBaseURL: process.env.AUTH0_ISSUER,
-  tokenSigningAlg: "RS256",
-});
+import authRoute from "./routes/auth.js"
+import hotelsRoute from "./routes/hotels.js"
+import roomsRoute from "./routes/rooms.js"
+import usersRoute from "./routes/users.js"
+import cookieParser from "cookie-parser";
+import cors from "cors"
+import session from "express-session";
 
-const app = express();
+const app = express()
 
 app.use(cors());
-app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(express.json());
-app.use(morgan("dev"));
+app.use(session({
+    secret: process.env.JWT,
+    resave: true,
+    saveUninitialized: true,
+}))
 
-const { PrismaClient } = pkg;
-const prisma = new PrismaClient();
 
-// this is a public endpoint because it doesn't have the requireAuth middleware
-app.get("/ping", (req, res) => {
-  res.send("pong");
-});
+app.use("/api/auth", authRoute)
+app.use("/api/hotels", hotelsRoute)
+app.use("/api/rooms", roomsRoute)
+app.use("/api/users", usersRoute)
 
-// add your endpoints below this line
-
-app.listen(8000, () => {
-  console.log("Server running on http://localhost:8000 🎉 🚀");
-});
+app.listen(8800, () => {
+    console.log("Connected to backend!")
+})
